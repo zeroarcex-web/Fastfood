@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Яндекс Еда - Умная Доставка</title>
+    <!-- Подключение Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Иконки -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Шрифт Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Скрытие полосы прокрутки для категорий */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none; /* IE и Edge */
+            scrollbar-width: none; /* Firefox */
+        }
+        
+        /* * Цветовая схема в стиле "Яндекс.Еда" (Белый, Черный, Желтый)
+         * --accent: #facc15 (Tailwind 'yellow-500')
+        */
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f3f4f6; /* Светло-серый */
+            --text-primary: #111827; /* Почти черный */
+            --text-secondary: #6b7280; /* Серый */
+            --border-color: #e5e7eb;
+            --accent-color: #facc15; /* Ярко-желтый */
+        }
+
+        /* Применение переменных */
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        .bg-primary { background-color: var(--bg-primary); }
+        .bg-secondary { background-color: var(--bg-secondary); }
+        .text-primary { color: var(--text-primary); }
+        .text-secondary { color: var(--text-secondary); }
+        .border-color { border-color: var(--border-color); }
+        .placeholder-color::placeholder { color: var(--text-secondary); }
+        .accent-bg { background-color: var(--accent-color); }
+        .accent-text { color: var(--accent-color); }
+
+        /* Стиль для кнопки категории (соответствует Я.Еда) */
+        .category-btn {
+            white-space: nowrap; /* Не дает кнопкам переноситься */
+            border: 1px solid transparent;
+        }
+        .category-btn.active {
+            border-color: #eab308; /* Желтая рамка для активной */
+        }
+        .category-btn:not(.active) {
+            border-color: #e5e7eb; /* Легкая серая рамка для неактивной */
+        }
+
+        /* Стиль для модального окна */
+        .modal {
+            transition: opacity 0.3s ease-in-out;
+            background-color: rgba(0, 0, 0, 0.7); /* Темный фон */
+            backdrop-filter: blur(8px); /* Размытие фона */
+        }
+
+        /* Стилизация кнопки "Показать код страны" */
+        .phone-input-group button {
+            transition: background-color 0.2s;
+        }
+
+        /* Стилизация инпута для имитации "Яндекс ID" */
+        .yandex-input {
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            font-size: 16px;
+            background-color: #f9fafb;
+            color: var(--text-primary);
+            width: 100%;
+            outline: none;
+        }
+        .yandex-input:focus {
+            border-color: #facc15;
+            box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.5);
+        }
+    </style>
+</head>
+<body class="bg-primary">
+
+    <!-- Глобальный контейнер -->
+    <div class="min-h-screen">
+
+        <!-- Шапка -->
+        <header class="sticky top-0 z-50 bg-primary/90 backdrop-blur-md border-b border-color">
+            <div class="container mx-auto max-w-7xl px-4">
+                <div class="flex justify-between items-center h-16">
+                    
+                    <!-- Логотип (Имитация Яндекс.Еда) -->
+                    <div class="flex items-center space-x-2">
+                        <!-- Стилизованный логотип 'Е' в желтом круге -->
+                        <svg class="h-8 w-8 text-yellow-500 fill-current" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="100" height="100" rx="50" fill="#FACC15"/>
+                            <!-- Огрубленная имитация стилизованной буквы Е -->
+                            <path d="M30 35H70V45H30V35ZM30 55H70V65H30V55ZM30 75H60V85H30V75Z" fill="black"/>
+                        </svg>
+                        <span class="font-bold text-xl text-primary">Еда</span>
+                    </div>
+
+                    <!-- Адрес и Поиск (Только для больших экранов) -->
+                    <div class="flex items-center space-x-4 w-full max-w-3xl ml-4 hidden lg:flex">
+                        <!-- Кнопка "Укажите адрес" -->
+                        <button class="flex items-center flex-shrink-0 space-x-1.5 py-2 px-4 rounded-full bg-gray-100 hover:bg-gray-200 text-sm font-medium text-primary transition-colors">
+                            <i data-lucide="map-pin" class="w-4 h-4 text-gray-700"></i>
+                            <span>Укажите адрес</span>
+                            <i data-lucide="chevron-down" class="w-3 h-3 text-gray-500"></i>
+                        </button>
+                        
+                        <!-- Поиск -->
+                        <div class="relative flex-grow">
+                            <input type="text" id="manual-search" placeholder="Поиск ресторанов и блюд..." class="w-full pl-10 pr-4 py-2 rounded-full bg-secondary border border-transparent focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-primary placeholder-color">
+                            <div class="absolute left-3 top-1/2 -translate-y-1/2">
+                                <i data-lucide="search" class="w-5 h-5 text-secondary"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Только поиск на маленьких/средних экранах -->
+                    <div class="block lg:hidden w-full max-w-xs md:max-w-md ml-4">
+                        <div class="relative">
+                            <input type="text" placeholder="Поиск ресторанов и блюд..." class="w-full pl-10 pr-4 py-2 rounded-full bg-secondary border border-transparent focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-primary placeholder-color">
+                            <div class="absolute left-3 top-1/2 -translate-y-1/2">
+                                <i data-lucide="search" class="w-5 h-5 text-secondary"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Иконки и кнопка "Войти" -->
+                    <div class="flex items-center space-x-4 ml-4">
+                        <button class="p-2 rounded-full hover:bg-secondary text-secondary hover:text-primary relative hidden sm:block">
+                            <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+                            <span class="absolute -top-1 -right-1 bg-yellow-500 text-black text-xs font-bold w-4 h-4 rounded-full flex items-center justify-center">0</span>
+                        </button>
+                        <!-- Кнопка Войти, которая открывает модальное окно -->
+                        <button id="login-button" class="text-sm font-medium py-1.5 px-4 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors">
+                            Войти
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Основной контент (Оставлен без изменений) -->
+        <main class="container mx-auto max-w-7xl px-4 py-8">
+            
+            <!-- Секция AI-Помощника -->
+            <section class="mb-12">
+                <div class="bg-gray-900 rounded-2xl p-6 md:p-10 text-white shadow-2xl">
+                    <div class="flex flex-col md:flex-row md:items-center">
+                        <div class="md:w-1/2 mb-6 md:mb-0">
+                            <h1 class="text-3xl md:text-4xl font-bold mb-3">Не знаете, что поесть?</h1>
+                            <p class="text-lg text-gray-300 mb-6">Опишите ваше настроение, и наш AI-помощник подберет идеальное блюдо.</p>
+                            <textarea id="ai-prompt" rows="3" class="w-full p-4 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-4 focus:ring-yellow-400 resize-none" placeholder="Например: 'Хочу что-нибудь легкое и полезное, бюджет до 500₽'"></textarea>
+                            <button id="ai-button" class="mt-4 w-full md:w-auto bg-yellow-500 text-black font-bold py-3 px-8 rounded-full text-lg hover:bg-yellow-400 transition-all shadow-lg hover:shadow-xl">
+                                <span id="ai-button-text">Найти блюдо</span>
+                                <div id="ai-loader" class="hidden w-6 h-6 border-4 border-t-yellow-500 border-r-yellow-500 border-b-yellow-500 border-l-gray-900 rounded-full animate-spin mx-auto"></div>
+                            </button>
+                        </div>
+                        <div id="ai-result-container" class="md:w-1/2 md:pl-10 min-h-[150px] flex items-center justify-center">
+                            <!-- Начальное состояние -->
+                            <div id="ai-placeholder" class="text-center text-gray-500">
+                                <i data-lucide="sparkles" class="w-16 h-16 mx-auto opacity-50"></i>
+                                <p class="mt-2 text-lg">Здесь появятся ваши персональные рекомендации...</p>
+                            </div>
+                            <!-- Результат -->
+                            <div id="ai-result" class="hidden bg-black/50 backdrop-blur-sm p-6 rounded-lg w-full">
+                                <h3 class="text-xl font-semibold mb-3 text-yellow-400">Ваши AI-рекомендации:</h3>
+                                <div id="ai-output" class="text-base space-y-2 text-gray-100"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Категории -->
+            <section class="mb-10">
+                <div id="categories-container" class="flex overflow-x-auto no-scrollbar space-x-3 pb-2">
+                    <!-- Категории будут вставлены здесь через JS -->
+                </div>
+            </section>
+            
+            <!-- Рестораны -->
+            <section>
+                <div id="restaurant-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <!-- Карточки ресторанов будут вставлены здесь -->
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Кнопка Техподдержки (фиксированная) -->
+    <button class="fixed bottom-6 right-6 z-50 p-4 rounded-full bg-yellow-500 text-black shadow-2xl hover:bg-yellow-400 transition-colors transform hover:scale-105">
+        <i data-lucide="help-circle" class="w-6 h-6"></i>
+    </button>
+    
+    <!-- МОДАЛЬНОЕ ОКНО АВТОРИЗАЦИИ/РЕГИСТРАЦИИ -->
+    <div id="auth-modal" class="modal fixed inset-0 z-[100] flex items-center justify-center opacity-0 pointer-events-none">
+        <div class="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl transform transition-all duration-300 scale-95">
+            
+            <!-- Заголовок и кнопка "Назад" -->
+            <div class="flex items-center mb-6">
+                <button id="auth-back-button" class="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors hidden">
+                    <i data-lucide="arrow-left" class="w-6 h-6 text-gray-700"></i>
+                </button>
+                <h2 id="auth-title" class="text-xl font-bold text-center w-full">Войдите с Яндекс ID</h2>
+                <button id="auth-close-button" class="p-2 -mr-2 rounded-full hover:bg-gray-100 transition-colors">
+                    <i data-lucide="x" class="w-6 h-6 text-gray-700"></i>
+                </button>
+            </div>
+
+            <!-- Контейнер для всех экранов -->
+            <div id="auth-screens">
+
+                <!-- ЭКРАН 1: ВХОД / РЕГИСТРАЦИЯ (MAIN) -->
+                <div id="screen-main" class="space-y-4">
+                    <!-- Кнопки выбора способа входа -->
+                    <div id="login-method-buttons" class="flex p-1 bg-gray-100 rounded-xl mb-6">
+                        <button id="tab-email" class="w-1/2 py-2.5 rounded-xl text-sm font-medium transition-colors bg-white shadow-sm text-gray-800">Почта</button>
+                        <button id="tab-phone" class="w-1/2 py-2.5 rounded-xl text-sm font-medium transition-colors text-gray-500">Телефон</button>
+                    </div>
+
+                    <!-- ПОД-ЭКРАН: ВХОД ПО ПОЧТЕ (EMAIL) -->
+                    <div id="login-email-screen">
+                        <input type="text" id="login-email-input" class="yandex-input" placeholder="Логин или email">
+                        <input type="password" id="login-password-input" class="yandex-input mt-3" placeholder="Пароль">
+                        <button id="login-submit-button" class="w-full mt-6 py-3 rounded-xl bg-gray-900 text-white font-semibold hover:bg-gray-800 transition-colors">Войти</button>
+                    </div>
+
+                    <!-- ПОД-ЭКРАН: ВХОД ПО ТЕЛЕФОНУ (PHONE) -->
+                    <div id="login-phone-screen" class="hidden">
+                        <div class="phone-input-group flex space-x-2">
+                            <button id="country-code-button" class="flex-shrink-0 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded-xl px-3 text-sm font-medium">
+                                <span id="country-code-display">+7</span>
+                                <i data-lucide="chevron-down" class="w-4 h-4 ml-1"></i>
+                            </button>
+                            <input type="tel" id="login-phone-input" class="yandex-input flex-grow" placeholder="Ваш номер телефона">
+                        </div>
+                        <button id="phone-submit-button" class="w-full mt-6 py-3 rounded-xl bg-gray-900 text-white font-semibold hover:bg-gray-800 transition-colors">Войти</button>
+                    </div>
+                    
+                    <button class="w-full mt-4 py-3 rounded-xl bg-gray-100 text-gray-800 font-semibold hover:bg-gray-200 transition-colors">
+                        По лицу или отпечатку
+                    </button>
+                    
+                    <!-- Кнопка Создать ID (переход на экран регистрации) -->
+                    <button id="go-to-register-button" class="w-full py-3 rounded-xl bg-gray-100 text-gray-800 font-semibold hover:bg-gray-200 transition-colors">
+                        Создать ID
+                    </button>
+                </div>
+                
+                <!-- ЭКРАН 2: ПОДТВЕРЖДЕНИЕ КОДОМ (CODE CONFIRMATION) -->
+                <div id="screen-code" class="hidden">
+                    <p class="text-center text-sm text-gray-600 mb-4">
+                        Мы отправили SMS с кодом на номер: <strong id="code-phone-display"></strong>
+                    </p>
+                    <input type="tel" id="sms-code-input" class="yandex-input text-center text-2xl tracking-[0.5em] font-mono" maxlength="4" placeholder="••••">
+                    <p id="code-error-message" class="text-red-500 text-sm text-center mt-2 hidden">Неверный код. Попробуйте еще раз.</p>
+                    <button id="code-submit-button" class="w-full mt-6 py-3 rounded-xl bg-gray-900 text-white font-semibold opacity-50 cursor-not-allowed" disabled>Подтвердить</button>
+                    <button id="resend-code-button" class="w-full mt-3 text-sm text-gray-500 hover:text-gray-900 transition-colors">Отправить код повторно</button>
+                </div>
+
+                <!-- ЭКРАН 3: РЕГИСТРАЦИЯ (REGISTER) -->
+                <div id="screen-register" class="hidden space-y-4">
+                    <p class="text-center text-sm text-gray-600">
+                        Создайте новый Яндекс ID. Выберите способ:
+                    </p>
+                    <div id="register-method-buttons" class="flex p-1 bg-gray-100 rounded-xl mb-6">
+                        <button id="reg-tab-phone" class="w-1/2 py-2.5 rounded-xl text-sm font-medium transition-colors bg-white shadow-sm text-gray-800">Телефон</button>
+                        <button id="reg-tab-email" class="w-1/2 py-2.5 rounded-xl text-sm font-medium transition-colors text-gray-500">Почта</button>
+                    </div>
+
+                    <!-- ПОД-ЭКРАН: РЕГИСТРАЦИЯ ПО ТЕЛЕФОНУ -->
+                    <div id="register-phone-screen">
+                        <div class="phone-input-group flex space-x-2 mb-4">
+                            <button class="flex-shrink-0 flex items-center justify-center bg-gray-200 rounded-xl px-3 text-sm font-medium">
+                                <span>+7</span>
+                                <i data-lucide="chevron-down" class="w-4 h-4 ml-1"></i>
+                            </button>
+                            <input type="tel" id="register-phone-input" class="yandex-input flex-grow" placeholder="Ваш номер телефона">
+                        </div>
+                        <button id="register-phone-submit-button" class="w-full py-3 rounded-xl bg-yellow-500 text-black font-semibold hover:bg-yellow-400 transition-colors">Продолжить</button>
+                    </div>
+
+                    <!-- ПОД-ЭКРАН: РЕГИСТРАЦИЯ ПО ПОЧТЕ -->
+                    <div id="register-email-screen" class="hidden space-y-3">
+                        <input type="email" id="register-email-input" class="yandex-input" placeholder="Ваша почта (логин)">
+                        <input type="password" id="register-password-input" class="yandex-input" placeholder="Пароль">
+                        <input type="password" id="register-confirm-password-input" class="yandex-input" placeholder="Повторите пароль">
+                        <button id="register-email-submit-button" class="w-full mt-3 py-3 rounded-xl bg-yellow-500 text-black font-semibold hover:bg-yellow-400 transition-colors">Зарегистрироваться</button>
+                    </div>
+
+                    <!-- Дополнительная информация -->
+                    <p class="text-xs text-gray-400 pt-4 text-center">
+                        Продолжая, вы соглашаетесь с Условиями использования Яндекса
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+    <!-- КОНЕЦ МОДАЛЬНОГО ОКНА -->
+
+    <script>
+        // --- Gemini API (Оставлено без изменений) ---
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=`; 
+        const API_KEY = ""; 
+
+        // --- Моковые данные ресторанов (Оставлено без изменений) ---
+        const mockRestaurants = [
+            { name: "Burger Queen", cuisine: "Бургеры, Фастфуд", rating: 4.8, deliveryTime: "25-35 мин", image: "https://placehold.co/600x400/f97316/white?text=Burger+Queen", category: "Бургеры", freeDelivery: true, priceRange: "₽₽" },
+            { name: "Combo Kings", cuisine: "Комбо-наборы, Фастфуд", rating: 4.9, deliveryTime: "30-40 мин", image: "https://placehold.co/600x400/facc15/111827?text=Combo+Kings", category: "Комбо", freeDelivery: false, priceRange: "₽" },
+            { name: "Pizza Bravo", cuisine: "Пицца, Итальянская", rating: 4.7, deliveryTime: "30-40 мин", image: "https://placehold.co/600x400/eab308/white?text=Pizza+Bravo", category: "Пицца", freeDelivery: true, priceRange: "₽₽₽" },
+            { name: "Суши Wok", cuisine: "Суши, Азия", rating: 4.9, deliveryTime: "40-50 мин", image: "https://placehold.co/600x400/111827/facc15?text=Суши+Wok", category: "Суши", freeDelivery: false, priceRange: "₽₽" },
+            { name: "GreenLeaf (Зеленый Лист)", cuisine: "Здоровая еда, Салаты", rating: 4.6, deliveryTime: "20-30 мин", image: "https://placehold.co/600x400/22c55e/white?text=GreenLeaf", category: "Здоровье", freeDelivery: true, priceRange: "₽₽" },
+            { name: "Фо-Бо 'Ханой'", cuisine: "Вьетнамская, Супы", rating: 4.8, deliveryTime: "35-45 мин", image: "https://placehold.co/600x400/06b6d4/white?text=Фо-Бо+Ханой", category: "Азия", freeDelivery: false, priceRange: "₽₽₽₽" },
+            { name: "Хинкальная 'Генацвале'", cuisine: "Грузинская, Выпечка", rating: 4.9, deliveryTime: "45-55 мин", image: "https://placehold.co/600x400/a855f7/white?text=Генацвале", category: "Грузия", freeDelivery: true, priceRange: "₽₽₽" },
+            { name: "Сладкий Рай", cuisine: "Десерты, Выпечка", rating: 4.7, deliveryTime: "20-30 мин", image: "https://placehold.co/600x400/ec4899/white?text=Десерты", category: "Десерты", freeDelivery: false, priceRange: "₽" },
+            { name: "Кофейня 24/7", cuisine: "Напитки, Выпечка", rating: 4.5, deliveryTime: "15-25 мин", image: "https://placehold.co/600x400/374151/white?text=Кофе", category: "Кофе", freeDelivery: false, priceRange: "₽₽" },
+            { name: "Vegan Power", cuisine: "Веган, Здоровье", rating: 4.8, deliveryTime: "25-35 мин", image: "https://placehold.co/600x400/059669/white?text=Vegan+Power", category: "Веган", freeDelivery: true, priceRange: "₽₽₽" },
+        ];
+        
+        // Список категорий для рендеринга (Оставлено без изменений)
+        const categories = [
+            { label: "Все", icon: "list-ordered" },
+            { label: "Самовывоз", icon: "briefcase" },
+            { label: "Бургеры", icon: "sandwich" },
+            { label: "Комбо", icon: "box" },
+            { label: "Пицца", icon: "slice" },
+            { label: "Суши", icon: "fish" },
+            { label: "Здоровье", icon: "salad" },
+            { label: "Азия", icon: "ramen" },
+            { label: "Грузия", icon: "utensils-crossed" },
+            { label: "Десерты", icon: "cake" },
+            { label: "Кофе", icon: "coffee" },
+            { label: "Веган", icon: "leaf" },
+        ];
+
+        let currentFilter = "Все";
+        let currentSearchQuery = ""; 
+        
+        // --- Элементы UI (Оставлено без изменений) ---
+        const aiButton = document.getElementById('ai-button');
+        const aiButtonText = document.getElementById('ai-button-text');
+        const aiLoader = document.getElementById('ai-loader');
+        const aiPrompt = document.getElementById('ai-prompt');
+        const aiResultContainer = document.getElementById('ai-result-container');
+        const aiPlaceholder = document.getElementById('ai-placeholder');
+        const aiResult = document.getElementById('ai-result');
+        const aiOutput = document.getElementById('ai-output');
+        const restaurantGrid = document.getElementById('restaurant-grid');
+        const categoriesContainer = document.getElementById('categories-container');
+        const manualSearchInput = document.getElementById('manual-search');
+
+        // --- Элементы UI для АВТОРИЗАЦИИ ---
+        const authModal = document.getElementById('auth-modal');
+        const loginButton = document.getElementById('login-button');
+        const authCloseButton = document.getElementById('auth-close-button');
+        const authBackButton = document.getElementById('auth-back-button');
+        const authTitle = document.getElementById('auth-title');
+        
+        // Экраны
+        const screenMain = document.getElementById('screen-main');
+        const screenCode = document.getElementById('screen-code');
+        const screenRegister = document.getElementById('screen-register');
+
+        // Main Login (Вход)
+        const tabEmail = document.getElementById('tab-email');
+        const tabPhone = document.getElementById('tab-phone');
+        const loginEmailScreen = document.getElementById('login-email-screen');
+        const loginPhoneScreen = document.getElementById('login-phone-screen');
+        const loginSubmitButton = document.getElementById('login-submit-button');
+        const phoneSubmitButton = document.getElementById('phone-submit-button');
+        const goToRegisterButton = document.getElementById('go-to-register-button');
+        const loginPhoneInput = document.getElementById('login-phone-input');
+        
+        // Code Confirmation (Код)
+        const codePhoneDisplay = document.getElementById('code-phone-display');
+        const smsCodeInput = document.getElementById('sms-code-input');
+        const codeSubmitButton = document.getElementById('code-submit-button');
+        const codeErrorMessage = document.getElementById('code-error-message');
+        const resendCodeButton = document.getElementById('resend-code-button');
+
+        // Register (Регистрация)
+        const regTabPhone = document.getElementById('reg-tab-phone');
+        const regTabEmail = document.getElementById('reg-tab-email');
+        const registerPhoneScreen = document.getElementById('register-phone-screen');
+        const registerEmailScreen = document.getElementById('register-email-screen');
+        const registerPhoneInput = document.getElementById('register-phone-input');
+        const registerPhoneSubmitButton = document.getElementById('register-phone-submit-button');
+        const registerEmailSubmitButton = document.getElementById('register-email-submit-button');
+        const registerPasswordInput = document.getElementById('register-password-input');
+        const registerConfirmPasswordInput = document.getElementById('register-confirm-password-input');
+
+        const CORRECT_SMS_CODE = "2011"; // Имитация правильного кода
+
+        let currentScreen = 'main'; // main | code | register
+        let currentLoginMode = 'email'; // email | phone (только для screenMain)
+        let currentRegisterMode = 'phone'; // email | phone (только для screenRegister)
+
+        // --- Общие функции модального окна ---
+
+        function showModal() {
+            authModal.classList.remove('opacity-0', 'pointer-events-none');
+            // Reset to main screen on show
+            resetModal();
+        }
+
+        function hideModal() {
+            authModal.classList.add('opacity-0', 'pointer-events-none');
+        }
+
+        function resetModal() {
+            // Сброс всех экранов и полей
+            screenMain.classList.remove('hidden');
+            screenCode.classList.add('hidden');
+            screenRegister.classList.add('hidden');
+            authBackButton.classList.add('hidden');
+            
+            // Сброс полей ввода
+            smsCodeInput.value = '';
+            codeErrorMessage.classList.add('hidden');
+
+            // Установка начального экрана
+            currentScreen = 'main';
+            authTitle.textContent = "Войдите с Яндекс ID";
+            updateMainScreenMode('email');
+            updateRegisterScreenMode('phone');
+        }
+        
+        function navigateTo(screenName, backButtonVisible = false) {
+            screenMain.classList.add('hidden');
+            screenCode.classList.add('hidden');
+            screenRegister.classList.add('hidden');
+
+            authBackButton.classList.toggle('hidden', !backButtonVisible);
+
+            switch (screenName) {
+                case 'main':
+                    screenMain.classList.remove('hidden');
+                    authTitle.textContent = "Войдите с Яндекс ID";
+                    currentScreen = 'main';
+                    break;
+                case 'code':
+                    screenCode.classList.remove('hidden');
+                    authTitle.textContent = "Подтверждение";
+                    currentScreen = 'code';
+                    break;
+                case 'register':
+                    screenRegister.classList.remove('hidden');
+                    authTitle.textContent = "Регистрация";
+                    currentScreen = 'register';
+                    break;
+            }
+        }
+
+        // --- Логика ВХОД (Main Screen) ---
+
+        function updateMainScreenMode(mode) {
+            currentLoginMode = mode;
+            
+            // Визуальное переключение вкладок
+            tabEmail.classList.toggle('bg-white', mode === 'email');
+            tabEmail.classList.toggle('shadow-sm', mode === 'email');
+            tabEmail.classList.toggle('text-gray-800', mode === 'email');
+            tabEmail.classList.toggle('text-gray-500', mode !== 'email');
+
+            tabPhone.classList.toggle('bg-white', mode === 'phone');
+            tabPhone.classList.toggle('shadow-sm', mode === 'phone');
+            tabPhone.classList.toggle('text-gray-800', mode === 'phone');
+            tabPhone.classList.toggle('text-gray-500', mode !== 'phone');
+
+            // Переключение экранов
+            loginEmailScreen.classList.toggle('hidden', mode !== 'email');
+            loginPhoneScreen.classList.toggle('hidden', mode !== 'phone');
+        }
+
+        // Клик по вкладкам
+        tabEmail.addEventListener('click', () => updateMainScreenMode('email'));
+        tabPhone.addEventListener('click', () => updateMainScreenMode('phone'));
+
+        // Клик "Войти" по почте
+        loginSubmitButton.addEventListener('click', () => {
+            const email = document.getElementById('login-email-input').value;
+            const password = document.getElementById('login-password-input').value;
+            
+            if (email.trim() && password.trim()) {
+                console.log(`Попытка входа по почте: ${email}`);
+                // В реальном приложении здесь был бы API вызов
+                hideModal();
+            } else {
+                alert('Пожалуйста, введите логин/email и пароль.');
+            }
+        });
+
+        // Клик "Войти" по телефону (переход к подтверждению кодом)
+        phoneSubmitButton.addEventListener('click', () => {
+            const phone = loginPhoneInput.value.trim();
+            if (phone.length >= 7) { // Простая проверка длины
+                codePhoneDisplay.textContent = `+7 ${phone}`;
+                navigateTo('code', true);
+            } else {
+                alert('Пожалуйста, введите корректный номер телефона.');
+            }
+        });
+
+        // Клик "Создать ID" (переход на экран регистрации)
+        goToRegisterButton.addEventListener('click', () => {
+            navigateTo('register', true);
+        });
+
+        // --- Логика ПОДТВЕРЖДЕНИЕ КОДОМ (Code Screen) ---
+
+        smsCodeInput.addEventListener('input', (e) => {
+            const code = e.target.value.trim();
+            codeErrorMessage.classList.add('hidden');
+
+            if (code.length === 4) {
+                codeSubmitButton.disabled = false;
+                codeSubmitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                codeSubmitButton.classList.add('bg-yellow-500', 'text-black', 'hover:bg-yellow-400');
+            } else {
+                codeSubmitButton.disabled = true;
+                codeSubmitButton.classList.add('opacity-50', 'cursor-not-allowed');
+                codeSubmitButton.classList.remove('bg-yellow-500', 'text-black', 'hover:bg-yellow-400');
+            }
+        });
+
+        codeSubmitButton.addEventListener('click', () => {
+            const code = smsCodeInput.value.trim();
+
+            if (code === CORRECT_SMS_CODE) {
+                console.log("Код подтвержден. Пользователь вошел/зарегистрировался.");
+                // Имитация успешного входа
+                alert('Успешный вход! Код: 2011');
+                hideModal();
+            } else {
+                codeErrorMessage.textContent = `Неверный код. Правильный код: ${CORRECT_SMS_CODE}`;
+                codeErrorMessage.classList.remove('hidden');
+                smsCodeInput.value = ''; // Очистить поле
+                codeSubmitButton.disabled = true;
+                codeSubmitButton.classList.add('opacity-50', 'cursor-not-allowed');
+                codeSubmitButton.classList.remove('bg-yellow-500', 'text-black', 'hover:bg-yellow-400');
+            }
+        });
+
+        resendCodeButton.addEventListener('click', () => {
+            alert('Код 2011 отправлен повторно.');
+        });
+
+        // --- Логика РЕГИСТРАЦИЯ (Register Screen) ---
+
+        function updateRegisterScreenMode(mode) {
+            currentRegisterMode = mode;
+            
+            // Визуальное переключение вкладок
+            regTabPhone.classList.toggle('bg-white', mode === 'phone');
+            regTabPhone.classList.toggle('shadow-sm', mode === 'phone');
+            regTabPhone.classList.toggle('text-gray-800', mode === 'phone');
+            regTabPhone.classList.toggle('text-gray-500', mode !== 'phone');
+
+            regTabEmail.classList.toggle('bg-white', mode === 'email');
+            regTabEmail.classList.toggle('shadow-sm', mode === 'email');
+            regTabEmail.classList.toggle('text-gray-800', mode === 'email');
+            regTabEmail.classList.toggle('text-gray-500', mode !== 'email');
+
+            // Переключение экранов
+            registerPhoneScreen.classList.toggle('hidden', mode !== 'phone');
+            registerEmailScreen.classList.toggle('hidden', mode !== 'email');
+        }
+
+        regTabPhone.addEventListener('click', () => updateRegisterScreenMode('phone'));
+        regTabEmail.addEventListener('click', () => updateRegisterScreenMode('email'));
+
+        // Регистрация по телефону (переход к подтверждению кодом)
+        registerPhoneSubmitButton.addEventListener('click', () => {
+            const phone = registerPhoneInput.value.trim();
+            if (phone.length >= 7) { 
+                codePhoneDisplay.textContent = `+7 ${phone}`;
+                navigateTo('code', true);
+            } else {
+                alert('Пожалуйста, введите корректный номер телефона для регистрации.');
+            }
+        });
+
+        // Регистрация по почте
+        registerEmailSubmitButton.addEventListener('click', () => {
+            const email = document.getElementById('register-email-input').value;
+            const password = registerPasswordInput.value;
+            const confirmPassword = registerConfirmPasswordInput.value;
+
+            if (!email || !password || !confirmPassword) {
+                alert('Пожалуйста, заполните все поля.');
+                return;
+            }
+            if (password !== confirmPassword) {
+                alert('Пароли не совпадают.');
+                return;
+            }
+            
+            console.log(`Попытка регистрации по почте: ${email}`);
+            // Имитация успешной регистрации
+            hideModal();
+            alert(`Успешная регистрация для ${email}!`);
+        });
+
+
+        // --- Общие обработчики (Закрытие/Назад) ---
+
+        loginButton.addEventListener('click', showModal);
+        authCloseButton.addEventListener('click', hideModal);
+        
+        // Обработчик кнопки "Назад"
+        authBackButton.addEventListener('click', () => {
+            if (currentScreen === 'code') {
+                // Из экрана кода возвращаемся на тот экран, с которого пришли (либо main, либо register)
+                if (currentRegisterMode === 'phone' && screenRegister.classList.contains('hidden') === false) {
+                     // Если пришли с регистрации по телефону
+                     navigateTo('register', true);
+                } else if (currentLoginMode === 'phone' && screenMain.classList.contains('hidden') === false) {
+                    // Если пришли с входа по телефону
+                    navigateTo('main', false);
+                } else {
+                    // Дефолт, если не удалось отследить
+                    navigateTo('main', false);
+                }
+            } else if (currentScreen === 'register') {
+                // Из экрана регистрации всегда возвращаемся на главный вход
+                navigateTo('main', false);
+            }
+            // Главный экран не имеет кнопки "Назад"
+        });
+
+
+        // --- Логика фильтрации и рендеринга (Оставлено без изменений) ---
+        function applyFilters() {
+            let filteredRestaurants = mockRestaurants;
+            if (currentFilter !== "Все") {
+                if (currentFilter !== "Самовывоз") {
+                    filteredRestaurants = filteredRestaurants.filter(resto => resto.category === currentFilter);
+                }
+            }
+            if (currentSearchQuery) {
+                const query = currentSearchQuery.toLowerCase();
+                filteredRestaurants = filteredRestaurants.filter(resto => 
+                    resto.name.toLowerCase().includes(query) || 
+                    resto.cuisine.toLowerCase().includes(query) ||
+                    resto.category.toLowerCase().includes(query)
+                );
+            }
+            renderRestaurants(filteredRestaurants);
+        }
+        
+        function renderRestaurants(restaurantsToRender) {
+            restaurantGrid.innerHTML = '';
+            if (restaurantsToRender.length === 0) {
+                restaurantGrid.innerHTML = `
+                    <div class="col-span-full text-center py-10 bg-secondary rounded-xl">
+                        <i data-lucide="info" class="w-12 h-12 text-yellow-500 mx-auto mb-4"></i>
+                        <p class="text-xl font-semibold text-primary">По вашему запросу ничего не найдено.</p>
+                        <p class="text-secondary mt-1">Попробуйте выбрать другую категорию, изменить поисковый запрос или использовать AI-помощника.</p>
+                    </div>
+                `;
+            } else {
+                restaurantsToRender.forEach(resto => {
+                    const freeDeliveryTag = resto.freeDelivery 
+                        ? '<div class="absolute bottom-3 left-3 bg-green-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full shadow-md z-10">Бесплатная доставка</div>' 
+                        : '';
+                    
+                    const priceRange = resto.priceRange || '₽₽'; 
+
+                    const card = `
+                    <div class="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-100 hover:shadow-xl hover:border-yellow-500 transition-all duration-300 transform hover:-translate-y-1">
+                        <a href="#" class="block">
+                            <div class="relative">
+                                <img src="${resto.image}" alt="${resto.name}" class="w-full h-48 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/cccccc/333333?text=Нет+Фото';">
+                                ${freeDeliveryTag}
+                            </div>
+                            <div class="p-4">
+                                <h3 class="text-lg font-bold text-primary mb-1">${resto.name}</h3>
+                                <p class="text-sm text-secondary mb-3">${resto.cuisine}</p>
+                                <div class="flex items-center justify-between text-sm">
+                                    <div class="flex items-center space-x-3 font-medium text-primary">
+                                        <span class="flex items-center space-x-1">
+                                            <i data-lucide="star" class="w-4 h-4 text-yellow-500 fill-current"></i>
+                                            <span>${resto.rating}</span>
+                                        </span>
+                                        <span class="text-gray-500 font-bold">${priceRange}</span> 
+                                    </div>
+                                    <span class="flex items-center space-x-1 text-gray-600">
+                                        <i data-lucide="clock" class="w-4 h-4 text-gray-400"></i>
+                                        <span>${resto.deliveryTime}</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    `;
+                    restaurantGrid.insertAdjacentHTML('beforeend', card);
+                });
+            }
+            lucide.createIcons(); // Обновить иконки после рендера
+        }
+        
+        function renderCategories() {
+            categoriesContainer.innerHTML = '';
+            categories.forEach(cat => {
+                const isActive = cat.label === currentFilter;
+                const activeClass = isActive 
+                    ? 'accent-bg text-black active font-bold' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200';
+                const iconClass = isActive 
+                    ? 'text-black' 
+                    : 'text-gray-500';
+
+                const button = `
+                    <button data-category="${cat.label}" class="category-btn flex items-center flex-shrink-0 text-sm py-2 px-4 rounded-full transition-all ${activeClass}">
+                        <i data-lucide="${cat.icon}" class="w-4 h-4 mr-1 ${iconClass}"></i>
+                        <span>${cat.label}</span>
+                    </button>
+                `;
+                categoriesContainer.insertAdjacentHTML('beforeend', button);
+            });
+            lucide.createIcons();
+            addCategoryListeners();
+        }
+
+        function addCategoryListeners() {
+            document.querySelectorAll('.category-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const newFilter = e.currentTarget.dataset.category;
+                    if (currentFilter !== newFilter) {
+                        currentFilter = newFilter;
+                        manualSearchInput.value = "";
+                        currentSearchQuery = ""; 
+                        renderCategories();
+                        applyFilters();    
+                    }
+                });
+            });
+        }
+
+        manualSearchInput.addEventListener('input', (e) => {
+            currentSearchQuery = e.target.value.trim();
+            currentFilter = "Все"; 
+            renderCategories(); 
+            applyFilters();
+        });
+
+        // --- Логика AI-помощника (Оставлено без изменений) ---
+        async function getAiSuggestion() {
+            const prompt = aiPrompt.value;
+            if (!prompt) {
+                aiOutput.textContent = "Пожалуйста, введите ваш запрос.";
+                aiResult.classList.remove('hidden');
+                aiPlaceholder.classList.add('hidden');
+                return;
+            }
+
+            aiButtonText.classList.add('hidden');
+            aiLoader.classList.remove('hidden');
+            aiButton.disabled = true;
+
+            const systemPrompt = `Ты - AI-ассистент в приложении по доставке еды FoodAI. Твоя задача - помочь пользователю выбрать, что заказать.
+Пользователь описывает свое настроение или пожелание.
+Ты должен предложить 3-4 конкретных варианта блюд, которые можно заказать.
+Отвечай на русском языке. Ответ должен быть коротким, дружелюбным и по существу.
+Форматируй ответ как простой список (без нумерации, используй дефисы или звездочки).
+Пример:
+* Пицца "Пепперони" на тонком тесте
+* Легкий салат "Греческий"
+* Суп "Том-Ям"
+`;
+
+            const payload = {
+                contents: [{
+                    parts: [{ text: prompt }]
+                }],
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                }
+            };
+            
+            try {
+                let response;
+                let delay = 1000;
+                for (let i = 0; i < 5; i++) {
+                    response = await fetch(API_URL + API_KEY, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.ok) {
+                        break;
+                    } else if (response.status === 429 || response.status >= 500) {
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        delay *= 2;
+                    } else {
+                        throw new Error(`Ошибка API: ${response.statusText}`);
+                    }
+                }
+
+                if (!response.ok) {
+                    throw new Error("Не удалось получить ответ от AI после нескольких попыток.");
+                }
+
+                const result = await response.json();
+                const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (text) {
+                    aiOutput.innerHTML = text.replace(/\n/g, '<br>');
+                } else {
+                    aiOutput.textContent = "Извините, не удалось сгенерировать ответ. Попробуйте еще раз.";
+                }
+
+            } catch (error) {
+                console.error("Ошибка при вызове Gemini API:", error);
+                aiOutput.textContent = "Произошла ошибка сети. Пожалуйста, проверьте подключение и попробуйте снова.";
+            } finally {
+                aiButtonText.classList.remove('hidden');
+                aiLoader.classList.add('hidden');
+                aiButton.disabled = false;
+                
+                aiResult.classList.remove('hidden');
+                aiPlaceholder.classList.add('hidden');
+            }
+        }
+
+        aiButton.addEventListener('click', getAiSuggestion);
+        aiPrompt.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                getAiSuggestion();
+            }
+        });
+
+        // --- Инициализация ---
+        function init() {
+            lucide.createIcons();
+            renderCategories();
+            applyFilters();
+            lucide.createIcons(); // Повторно для всех элементов, включая модальное окно
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+
+    </script>
+</body>
+</html>
